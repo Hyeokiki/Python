@@ -159,6 +159,8 @@ if __name__ == "__main__":
     tempd['Sat'] = 5
     tempd['Sun'] = 6
 
+    #계약 조건에서 요일 따지기
+    
     for i in range(0, len(nameCheck)):
         if dateChange[i] == "M" :
             wage_date_dict[nameCheck[i]] = "M"
@@ -169,7 +171,7 @@ if __name__ == "__main__":
         
         if(endCheck[i] != ""):
             end_dict[nameCheck[i]] = str(endCheck[i])[5:7] + "-" + str(endCheck[i])[8:10] #종료 날짜 기록
-        
+    '''    
         if contractCheck[i] != "":
             contract_dict[nameCheck[i]] = contractCheck[i].split(',')
             #print(nameCheck[i])
@@ -178,7 +180,7 @@ if __name__ == "__main__":
             for d in contract_dict[nameCheck[i]]:
                 temp[tempd[d]] = 0
             contract_success_dict[nameCheck[i]] = temp
-
+    '''
         
             
     timeformat = "%H:%M" #시간 계산 포맷
@@ -189,8 +191,9 @@ if __name__ == "__main__":
     for n in tqdm(name) :
         if n not in end_dict :
             end_dict[n] = "99-99"
-        if n not in contract_success_dict:
-            contract_success_dict[n] = [1, 1, 1, 1, 1, 1, 1] #0은 계약 근무 날짜를 표현함
+
+        #if n not in contract_success_dict:
+        #    contract_success_dict[n] = [1, 1, 1, 1, 1, 1, 1] #0은 계약 근무 날짜를 표현함
         wage_dict[n] = 9500 #일단 9500으로 초기화
         line_dict = {} #주차별 줄 수 계산
         line_dict[0] = 0 #이거 1주차 아님 젤 첫번째꺼 예외용
@@ -338,10 +341,11 @@ if __name__ == "__main__":
                         #print(tempList)
                         #print(contract_success_dict[person[1]])
                         #print(check_contract(contract_success_dict[person[1]]))
+                        '''
                         if not check_contract(contract_success_dict[person[1]]):
                             weekBool1 = False
                             weekBool2 = False
-                            
+                            '''
                         if check_end(2022,int(WORKDAY[0:2]),int(WORKDAY[3:5]),2022,int(end_dict[n][0:2]),int(end_dict[n][3:5])):
                             weekBool1 = False
                             weekBool2 = False
@@ -461,13 +465,14 @@ if __name__ == "__main__":
                         sumRiceCount_week = 0
                         dayCheck_week = True
                         
+                        '''
                         #근무 요일 체크 초기화
                         temp = [1,1,1,1,1,1,1]
                         if person[1] in contract_dict:
                             for d in contract_dict[person[1]]:
                                 temp[tempd[d]] = 0
                             contract_success_dict[person[1]] = temp
-                        
+                        '''
                         tempList.append(str(countWeek) + "주차 총 급여 =================> ")
                         tempList.append("")
                         tempList.append("")
@@ -488,13 +493,13 @@ if __name__ == "__main__":
                 #근무 요일 계약 조건 충족 여부 판단
                 if person[1] in nameCheck :
                     dayIndex = cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5])) 
-                    contract_success_dict[person[1]][tempd[dayIndex]] = 1
+                    #contract_success_dict[person[1]][tempd[dayIndex]] = 1
                     #if cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5])) not in cont ract_dict[person[1]] :
                     #   dayCheck_week = False
                 if person[7] == "HOL":
                     dayIndex = cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5])) 
                     #print(dayIndex)
-                    contract_success_dict[person[1]][tempd[dayIndex]] = 1
+                    #contract_success_dict[person[1]][tempd[dayIndex]] = 1
                     HOLFlag = False
                     continue
                 else :
@@ -704,6 +709,7 @@ if __name__ == "__main__":
             elif int(sumWorkHour_week+lastWorkHour_week) >= 40 :
                 weekBool2 = True
                 
+            '''
             #근무 요일 계약 조건 충족 여부 판단
             if n in nameCheck :
                 #print(n)
@@ -712,12 +718,15 @@ if __name__ == "__main__":
                 if cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5])) not in contract_dict[n] :
                     #print("있음")
                     dayCheck_week = False
+            '''
             if not dayCheck_week : 
                 weekBool1 = False
                 weekBool2 = False
+            '''
             if not check_contract(contract_success_dict[person[1]]):
                 weekBool1 = False
                 weekBool2 = False
+            '''
             if check_end(2022,int(WORKDAY[0:2]),int(WORKDAY[3:5]),2022,int(end_dict[n][0:2]),int(end_dict[n][3:5])):
                 weekBool1 = False
                 weekBool2 = False
