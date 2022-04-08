@@ -8,18 +8,8 @@ from openpyxl.styles import Border, Side, PatternFill
 from openpyxl.chart import BarChart, Series, Reference
 import sys
 
+
 if __name__ == "__main__":
-    originMonth = 3
-    originMonth = int(sys.argv[1]) #두 번째 인자 값에 월을 입력한다.
-
-    originName = "2022년 "+ str(originMonth) +"월 출근시간표.xlsx"
-    
-    print(originMonth)
-    
-    globalMonth = originMonth
-    df = pd.read_excel(originName)
-    df = df.fillna('')
-
     #분당 돈 계산하고 소수점은 절삭
     #n월 n주차 구하기
     def week_no(y, m, d):
@@ -48,6 +38,8 @@ if __name__ == "__main__":
     
         return (target_day - firstday).days // 7 + 1 # 8
 
+    #print(str(week_no(2022, 3, 1))) test용 print()
+
     #요일 계산기
     def cal_day(y, m, d):
         days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -61,6 +53,28 @@ if __name__ == "__main__":
     def cal_pay(name, ):
         payment = 0
         return payment
+
+    originMonth = int(sys.argv[1]) #두 번째 인자 값에 월을 입력한다.
+    #originMonth = 3
+    originName = "2022년 "+ str(originMonth) +"월 출근시간표.xlsx"
+
+    globalMonth = originMonth
+    #df = pd.read_excel('22.02.worksheet.xlsx')
+    df = pd.read_excel(originName)
+    df = df.fillna('')
+    #print(df['Unnamed: 2'][3:-1]) 날짜
+    #print(df['Unnamed: 3'][3:-1]) 근무인원
+    #print(df['Unnamed: 4'][3:-1]) 근무태그
+    #workLoad = np.array(df['Unnamed: 5'][3:-1]) 근무량
+    #print(df['Unnamed: 7'][3:-1]) 출근시간
+    #print(df['Unnamed: 8'][3:-1]) 퇴근시간
+    #print(df['Unnamed: 9'][3:-1]) 비고
+    #print()
+    #print(df)
+
+    #print(df['Unnamed: 12'][3:-1])
+    #print(df['Unnamed: 15'][3:-1])
+
     def add_comma(money):
         mSize = len(money)
         if mSize > 3 :
@@ -102,7 +116,7 @@ if __name__ == "__main__":
     dateChange = np.array(df['Unnamed: 15'][3:-1]) #수습 본계약 전환일 리스트
     contractCheck = np.array(df['Unnamed: 16'][3:-1]) #주휴수당 여부 확인용 계약 이름 체크 리스트
     endCheck = np.array(df['Unnamed: 17'][3:-1]) #근무 종료일 체크
-        
+
     tempList = []
     peopleList = []
     for index in range(0,len(name)):
@@ -114,10 +128,15 @@ if __name__ == "__main__":
         tempList.append(workLoad[index])
         tempList.append("") #식대 칸
         tempList.append(etc[index])
+        #tempList.append(day[index]) #근무날의 요일을 추가
         peopleList.append(tempList)
         tempList = []
-    
+
+
     commuteDf = pd.DataFrame(peopleList)
+    #print(commuteDf)
+    #commuteDf.to_excel("testResult.xlsx", index = False )
+
     #개인별 월별 급여내역서 만들기
     wage = [ 9160, 9500, 10000] #0 : 2022 최저 시급(수습), 1 : 현재 시급, 2 : 반장님 시급
 
@@ -128,6 +147,7 @@ if __name__ == "__main__":
     contract_success_dict = {} #개인별 근무 요일 충족
 
     end_dict = {} #개인별 종료 dictionary
+
     record_dict = {} #이월되는 주휴수당 기록용 dict
 
     tempd = {}
@@ -144,18 +164,23 @@ if __name__ == "__main__":
             wage_date_dict[nameCheck[i]] = "M"
         elif nameCheck[i] != "" and nameCheck[i] != "성함" and dateChange[i] != "반장" and dateChange[i] != "":
             wage_date_dict[nameCheck[i]] = str(dateChange[i])[5:7] + "-" + str(dateChange[i])[8:10] #날짜 기록
-
+            #print(nameCheck[i])
+            #print(wage_date_dict[nameCheck[i]])
+        
         if(endCheck[i] != ""):
             end_dict[nameCheck[i]] = str(endCheck[i])[5:7] + "-" + str(endCheck[i])[8:10] #종료 날짜 기록
         
         if contractCheck[i] != "":
             contract_dict[nameCheck[i]] = contractCheck[i].split(',')
-
+            #print(nameCheck[i])
+            #print(contract_dict[nameCheck[i]])
             temp = [1,1,1,1,1,1,1]
             for d in contract_dict[nameCheck[i]]:
                 temp[tempd[d]] = 0
             contract_success_dict[nameCheck[i]] = temp
 
+        
+            
     timeformat = "%H:%M" #시간 계산 포맷
     dateformat = "%m-%d" #날짜 계산 포맷
 
@@ -163,7 +188,7 @@ if __name__ == "__main__":
     work_dict_person = {} #사람마다 주마다 성과 줄 계산한 리스트 저장
     for n in tqdm(name) :
         if n not in end_dict :
-            end_dict[n] = "12-31"
+            end_dict[n] = "99-99"
         if n not in contract_success_dict:
             contract_success_dict[n] = [1, 1, 1, 1, 1, 1, 1] #0은 계약 근무 날짜를 표현함
         wage_dict[n] = 9500 #일단 9500으로 초기화
@@ -209,7 +234,25 @@ if __name__ == "__main__":
         tempList.append("식대")
         tempList.append("비 고")
         personData.append(tempList)
-                
+        
+        '''
+        #주차별 근무 시간 기록용 dictionary
+        workTimeWeek_dict = {}
+        workTimeWeek_dict[0] = 0 #1주차 총 근무 시간
+        workTimeWeek_dict[1] = 0 #2주차 총 근무 시간
+        workTimeWeek_dict[2] = 0 #3주차 총 근무 시간
+        workTimeWeek_dict[3] = 0 #4주차 총 근무 시간
+        workTimeWeek_dict[4] = 0 #5주차 총 근무 시간
+        
+        #주차별 근무 성과 기록용 dictionary
+        workLoadWeek_dict = {}
+        workLoadWeek_dict[0] = 0 #1주차 총 근무 성과
+        workLoadWeek_dict[1] = 0 #2주차 총 근무 성과
+        workLoadWeek_dict[2] = 0 #3주차 총 근무 성과
+        workLoadWeek_dict[3] = 0 #4주차 총 근무 성과
+        workLoadWeek_dict[4] = 0 #5주차 총 근무 성과
+        '''
+        
         sumWorkHour_week = 0 #주차 별 근무 hour
         sumWorkMinute_week = 0 #주차 별 근무 minute
         sumOverWorkHour_week = 0 #주차 별 근무 hour
@@ -221,6 +264,7 @@ if __name__ == "__main__":
         dayCheck_week = True #주차 별 근무 요일 계약 조건 충족여부
         weekCheck = False #근무 처음 시작하는 주차 체크~
         weekFlag = True #근무 처음 시작하는 주차 출력용  
+        HOLFlag = True #그 주에 Holiday만 있으면 주차 출력 x
         
 
         countWeek = 0 #주차 체크 변수
@@ -238,7 +282,7 @@ if __name__ == "__main__":
                 #print(int(WORKDAY.split("-")[0]))
                 if globalMonth != int(WORKDAY.split("-")[0]):
                     lastCheck = False
-                if weekFlag :
+                if weekFlag:
                     tempList = []
                     personData.append(tempList)
                     tempList = []
@@ -246,7 +290,9 @@ if __name__ == "__main__":
                     personData.append(tempList)
                     weekFlag = False
                 #주차가 바뀌는 파트
-                if countWeek != week_no( 2022,int(WORKDAY[0:2]),int(WORKDAY[3:5])) and weekCheck and lastCheck:
+                if HOLFlag != True:
+                    countWeek = week_no( 2022, int(WORKDAY[0:2]), int(WORKDAY[3:5]))
+                elif countWeek != week_no( 2022,int(WORKDAY[0:2]),int(WORKDAY[3:5])) and weekCheck and lastCheck:
                     countWeek = week_no( 2022, int(WORKDAY[0:2]), int(WORKDAY[3:5]))
                     #weekFlag = False
                     if countWeek > 0 :
@@ -288,13 +334,33 @@ if __name__ == "__main__":
                             weekBool1 = False
                             weekBool2 = False
                         
+                        #print(person[1])
+                        #print(tempList)
+                        #print(contract_success_dict[person[1]])
+                        #print(check_contract(contract_success_dict[person[1]]))
                         if not check_contract(contract_success_dict[person[1]]):
                             weekBool1 = False
                             weekBool2 = False
                             
                         if check_end(2022,int(WORKDAY[0:2]),int(WORKDAY[3:5]),2022,int(end_dict[n][0:2]),int(end_dict[n][3:5])):
                             weekBool1 = False
-                            weekBool2 = False                        
+                            weekBool2 = False
+                            
+                        #사람 타입 별 계산
+                        MONTH = int(WORKDAY.split("-")[0])
+                        DAY = int(WORKDAY.split("-")[1])
+                        #밑의 날짜는 본 계약 시작일
+                        if wage_date_dict[n] != "M":
+                            MONTH2 = int(wage_date_dict[n].split("-")[0])
+                            DAY2 = int(wage_date_dict[n].split("-")[1])
+                            if MONTH < MONTH2 :
+                                wage_dict[n] = wage[0] #수습
+                                weekBool1 = False
+                                weekBool2 = False
+                            elif MONTH == MONTH2 and DAY < DAY2 :
+                                weekBool1 = False
+                                weekBool2 = False
+
                         tempList = []
                         if weekBool1 == False and weekBool2 == False:
                             tempList.append("주휴수당 여부(주 15시간 이상 40시간 미만) : ")
@@ -351,14 +417,17 @@ if __name__ == "__main__":
                         tempList.append(str(countWeek) + "주차 급여(주휴수당 제외) : ")
                         if weekBool1 == True : #주휴수당 15시간 이상 여부
                             tempWage_week = (float)( (( (sumWorkHour_week + (float)(sumWorkMinute_week )/60) / 40)) * 8 * personWage )
-                            tempWage_week += (float)(( (sumOverWorkHour_week + (float)(sumOverWorkMinute_week / 60))/40) * 8 * ((float)(personWage * 1.5)))
+                            tempWage_week += (float)(( (sumOverWorkHour_week + (float)(sumOverWorkMinute_week / 60))/40) * 8 * ((float)(personWage)))
                         elif weekBool2 == True : #주휴수당 40시간 이상 여부
                             tempWage_week = 8 * personWage
-                            tempWage_week += 8 * ((float)(personWage * 1.5))
+                            #tempWage_week += 8 * ((float)(personWage * 1.5))
                         tempList.append("")
                         tempList.append("")
                         tempList.append("")
                         tempList.append("")
+                        #for i in range(len(sumWage_week)-1, -1, -1):
+                        #    if (i % 3) == 2:
+                        #    sumWage_week[i]
                         tempList.append("₩" + add_comma(str(int(sumWage_week))))
                         personData.append(tempList)
                         tempList = []
@@ -420,18 +489,23 @@ if __name__ == "__main__":
                 if person[1] in nameCheck :
                     dayIndex = cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5])) 
                     contract_success_dict[person[1]][tempd[dayIndex]] = 1
-
+                    #if cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5])) not in cont ract_dict[person[1]] :
+                    #   dayCheck_week = False
                 if person[7] == "HOL":
                     dayIndex = cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5])) 
                     #print(dayIndex)
                     contract_success_dict[person[1]][tempd[dayIndex]] = 1
+                    HOLFlag = False
                     continue
+                else :
+                    HOLFlag = True
                 #날짜 기록
                 tempList = []
                 tempList.append(WORKDAY + " " + str(cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5]))))
                 
                 #첫 근무 시작하는 주 체크
-                weekCheck = True
+                if HOLFlag == True:
+                    weekCheck = True
                 
                 #출근 시간 기록
                 tempList.append(person[2]) #근무 타입 태그
@@ -469,6 +543,9 @@ if __name__ == "__main__":
                     if wage_date_dict[n] != "M":
                         MONTH2 = int(wage_date_dict[n].split("-")[0])
                         DAY2 = int(wage_date_dict[n].split("-")[1])
+                        #print(n)
+                        #print(str(MONTH) + " - "+ str(DAY))
+                        #print(str(MONTH2) + " - "+ str(DAY2))
 
                     if wage_date_dict[n] == "M":
                         wage_dict[n] = wage[2] #반장님
@@ -508,24 +585,38 @@ if __name__ == "__main__":
                     
                     lastWage_week += int(personWage * 1.5) * cal_workHour
                     lastWage_week += ((float)(cal_workMinute/60)) * (personWage * 1.5)
+                elif person[7] == "HOUSE":
+                    sumWage_week += 9500 * cal_workHour
+                    sumWage_week += float(cal_workMinute/60) * 9500    
                 elif person[7] != "DO" : 
                     sumWage_week += personWage * cal_workHour
-                    sumWage_week += ((float)(cal_workMinute/60)) * personWage
-                else :
-                    sumWage_week += int(personWage * 1.5) * cal_workHour
-                    sumWage_week += ((float)(cal_workMinute/60)) * (personWage * 1.5)
+                    sumWage_week += float(cal_workMinute/60) * personWage
+                elif person[7] == "DO" :
+                    sumWage_week += float(personWage * 1.5) * cal_workHour
+                    sumWage_week += float(cal_workMinute/60) * float(personWage * 1.5)
+                
+                #if person[1] == "조수미" and person[7] == "HOUSE":
+                #    print()
+                #   print(WORKDAY)
+                #   print(9500 * cal_workHour + float(cal_workMinute/60) * 9500)
+                #if person[1] == "조수미":
+                #    print()
+                #    print(WORKDAY)
+                #    print(9500 * cal_workHour + float(cal_workMinute/60) * 9500)
                 
                 if person[7] != "DO":
                     sumWorkHour += cal_workHour
                     sumWorkHour_week += cal_workHour
                     sumWorkMinute += cal_workMinute 
                     sumWorkMinute_week += cal_workMinute #주마다 분 더하기
-                else :
+                elif person[7] == "DO" :
                     sumOverWorkHour += cal_workHour
                     sumOverWorkHour_week += cal_workHour
                     sumOverWorkMinute += cal_workMinute 
                     sumOverWorkMinute_week += cal_workMinute #주마다 분 더하기
-
+                #근무 주차 계산
+                #workWeek_dict[countWeek] += cal_worktime
+                
                 #총 검수 평균 계산
                 WORKLOAD = str(person[5]).split(".")[0]
                 if WORKLOAD == "알 수 없음" or WORKLOAD == "해당x":
@@ -575,6 +666,8 @@ if __name__ == "__main__":
                 #비고추가
                 tempList.append(person[7]) #비고 추가
                 personData.append(tempList)
+                #print(person[1])
+                #print(tempList)
                 line_dict[countWeek+1] += 1 
                 
                 
@@ -613,6 +706,9 @@ if __name__ == "__main__":
                 
             #근무 요일 계약 조건 충족 여부 판단
             if n in nameCheck :
+                #print(n)
+                #print(cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5])))
+                #print(contract_dict[n] )
                 if cal_day(2022, int(WORKDAY[0:2]),int(WORKDAY[3:5])) not in contract_dict[n] :
                     #print("있음")
                     dayCheck_week = False
@@ -625,6 +721,21 @@ if __name__ == "__main__":
             if check_end(2022,int(WORKDAY[0:2]),int(WORKDAY[3:5]),2022,int(end_dict[n][0:2]),int(end_dict[n][3:5])):
                 weekBool1 = False
                 weekBool2 = False
+                
+            #사람 타입 별 계산
+            MONTH = int(WORKDAY.split("-")[0])
+            DAY = int(WORKDAY.split("-")[1])
+            #밑의 날짜는 본 계약 시작일
+            if wage_date_dict[n] != "M":
+                MONTH2 = int(wage_date_dict[n].split("-")[0])
+                DAY2 = int(wage_date_dict[n].split("-")[1])
+                if MONTH < MONTH2 :
+                    wage_dict[n] = wage[0] #수습
+                    weekBool1 = False
+                    weekBool2 = False
+                elif MONTH == MONTH2 and DAY < DAY2 :
+                    weekBool1 = False
+                    weekBool2 = False
             tempList = []
             if weekBool1 == False and weekBool2 == False:
                 tempList.append("주휴수당 여부(주 15시간 이상 40시간 미만) : ")
@@ -696,6 +807,16 @@ if __name__ == "__main__":
                     wage_dict[n] = wage[1]
 
             personWage = wage_dict[n]
+            
+            #sumWage_week = personWage * sumWorkHour_week
+            #sumWage_week += ((int)(personWage*1.5)) * sumOverWorkHour_week
+            #sumWage_week += personWage * (float)(sumWorkMinute_week/60)
+            #sumWage_week += (float)(1.5 * personWage) * (float)(sumOverWorkMinute_week/60) 
+            
+            #lastWage_week = personWage * lastWorkHour_week
+            #lastWage_week += float(personWage * 1.5) * lastOverWorkHour_week
+            #lastWage_week += float(lastWorkMinute_week/60) * personWage
+            #lastWage_week += float(lastOverWorkMinute_week/60) * float(personWage * 1.5)
             sumLastWage += lastWage_week
             
             tempWage_week = 0 #한 주의 주휴수당 기록용
@@ -710,10 +831,10 @@ if __name__ == "__main__":
                 
             if weekBool1 == True : #주휴수당 15시간 이상 여부
                 tempWage_week = ( (sumWorkHour_week + (float)(sumWorkMinute_week/60) )/40 * 8 * personWage)
-                tempWage_week += ((sumOverWorkHour_week + (float)(sumOverWorkMinute_week/60))/40 * 8 * ((float)(personWage*1.5)))
+                tempWage_week += ((sumOverWorkHour_week + (float)(sumOverWorkMinute_week/60))/40 * 8 * ((float)(personWage)))
             elif weekBool2 == True : #주휴수당 40시간 이상 여부
                 tempWage_week = 8 * personWage
-                tempWage_week += 8 * ((float)(personWage*1.5))
+                #tempWage_week += 8 * ((float)(personWage*1.5))
 
             if globalMonth != int(WORKDAY.split("-")[0]):
                 sumWorkHour_week -= lastWorkHour_week
@@ -725,7 +846,9 @@ if __name__ == "__main__":
             tempList.append("")
             tempList.append("")
             tempList.append("")
-
+            #for i in range(len(sumWage_week)-1, -1, -1):
+            #    if (i % 3) == 2:
+            #    sumWage_week[i]
             tempList.append("₩" + add_comma(str(int(sumWage_week))))
             personData.append(tempList)
             tempList = []
@@ -802,7 +925,12 @@ if __name__ == "__main__":
             sumOverWorkHour_week = 0
             sumOverWorkMinute_week = 0
             sumWorkload_week = 0    
-
+        #print(n)
+        #print(line_dict[1])
+        #print(line_dict[2])
+        #print(line_dict[3])
+        #print(line_dict[4])
+        #print(line_dict[5])
         line_dict_person[n] = [line_dict[1]+line_dict[0], line_dict[2], line_dict[3], line_dict[4], line_dict[5]]
         personData.append([])
         personData.append(["**********************************************************************************"])
@@ -871,113 +999,131 @@ if __name__ == "__main__":
         personData.append(["**********************************************************************************"])
         
         personalDf = pd.DataFrame(personData)
-        personalDf.to_excel("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx", index = False)    
+        personalDf.to_excel("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx", index = False)
+    '''           
+    for i in work_dict_person :
+        print(i)
+        print(work_dict_person[i])
+    '''
 
-    for n in tqdm(name) :
-        wb = load_workbook("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx")
-        ws = wb.active
-        
-        #이월되는 주휴수당 기록
-        ws.cell(row = 2, column = 4).value = int(record_dict[n])
-        ws.cell(row = 2, column = 4).font = Font(color = "FFFFFF")
-        #검수 평균 차트 그리기
-        ws['L4'] = '날짜'
-        ws['M4'] = '검수평균'
-        index = 0
-        for i in range(5, len(work_dict_person[n])+5, 1):
-            ws.cell(row = i, column = 12).value = work_dict_person[n][index][0]
-            ws.cell(row = i, column = 13).value = int(work_dict_person[n][index][1])
-            index += 1
-        wb.save("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx")
-        
-        wb = load_workbook("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx")
-        ws = wb.active
-        c1 = BarChart()
-        c1.type = "col"
-        c1.style = 10
-        c1.title = n + "님의 검수 평균"
-        c1.y_axis.title = '검수 평균'
-        c1.x_axis.title = '날 짜'
-        data = Reference(ws, min_col = 13, min_row = 4, max_row = 4 + len(work_dict_person[n]))
-        cats = Reference(ws, min_col=12, min_row=5, max_row= 5 + len(work_dict_person[n]))
-        c1.add_data(data, titles_from_data=True)
-        c1.set_categories(cats)
-        c1.shape = 4
-        ws.add_chart(c1, "O4")
-        
-        b2 = ws["B2"] #성함
-        b2.font = Font(bold = True, size = 20)
-        
-        ws.column_dimensions['A'].width = 11 #근무날짜 열 너비 설정
-        ws.column_dimensions['E'].width = 15 #근무시간 열 너비 설정
-        
-        #테두리 설정
-        max_row = sum(line_dict_person[n]) + 56 #54는 근무 날짜 줄 수 빼고 남은 줄  수임
-        if line_dict_person[n][4] != 0:
-            max_row += 10
-        for i in range(0, 4, 1):
-            if line_dict_person[n][i] == 0 :
-                max_row -= 10
+# 이 파트는 엑셀 수정 및 출력 파트임.
 
-        for j in range(1, 9, 1) :
-            medium_border_top = Border(top = Side(style = 'medium'))
-            ws.cell(row = 4, column = j).border = medium_border_top
-            
-        for i in range(5, max_row,1) :
-            medium_border_right = Border(right = Side(style = 'medium'))
-            ws.cell(row = i, column = 8).border = medium_border_right
-            
-        for i in range(5, max_row,1) :
-            medium_border_left = Border(left = Side(style = 'medium'))
-            ws.cell(row = i, column = 1).border = medium_border_left
-            
-        for j in range(1, 9, 1) :
-            medium_border_bottom = Border(bottom = Side(style = 'medium'))
-            ws.cell(row = max_row, column = j).border = medium_border_bottom
+for n in tqdm(name) :
+    wb = load_workbook("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx")
+    ws = wb.active
+    
+    #이월되는 주휴수당 기록
+    ws.cell(row = 2, column = 4).value = int(record_dict[n])
+    ws.cell(row = 2, column = 4).font = Font(color = "FFFFFF")
+    #검수 평균 차트 그리기
+    ws['L4'] = '날짜'
+    ws['M4'] = '검수평균'
+    index = 0
+    for i in range(5, len(work_dict_person[n])+5, 1):
+        ws.cell(row = i, column = 12).value = work_dict_person[n][index][0]
+        ws.cell(row = i, column = 13).value = int(work_dict_person[n][index][1])
+        #print(n)
+        #print(work_dict_person[n][index][0])
+        #print(work_dict_person[n][index][1])
+        index += 1
+    wb.save("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx")
+    
+    wb = load_workbook("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx")
+    ws = wb.active
+    c1 = BarChart()
+    c1.type = "col"
+    c1.style = 10
+    c1.title = n + "님의 검수 평균"
+    c1.y_axis.title = '검수 평균'
+    c1.x_axis.title = '날 짜'
+    data = Reference(ws, min_col = 13, min_row = 4, max_row = 4 + len(work_dict_person[n]))
+    cats = Reference(ws, min_col=12, min_row=5, max_row= 5 + len(work_dict_person[n]))
+    c1.add_data(data, titles_from_data=True)
+    c1.set_categories(cats)
+    c1.shape = 4
+    ws.add_chart(c1, "O4")
+    
+    b2 = ws["B2"] #성함
+    b2.font = Font(bold = True, size = 20)
+    
+    ws.column_dimensions['A'].width = 11 #근무날짜 열 너비 설정
+    ws.column_dimensions['E'].width = 15 #근무시간 열 너비 설정
+    
+    #테두리 설정
+    #max_row = ws.rows
+    max_row = sum(line_dict_person[n]) + 56 #54는 근무 날짜 줄 수 빼고 남은 줄  수임
+    if line_dict_person[n][4] != 0:
+        max_row += 10
+    for i in range(0, 4, 1):
+        if line_dict_person[n][i] == 0 :
+            max_row -= 10
+    #print(n)
+    #print(max_row)
+    #print(sum(line_dict_person[n]))
+    for j in range(1, 9, 1) :
+        medium_border_top = Border(top = Side(style = 'medium'))
+        ws.cell(row = 4, column = j).border = medium_border_top
         
-        h4 = ws["H4"]
-        hm = ws["H"+str(max_row)]
+    for i in range(5, max_row,1) :
+        medium_border_right = Border(right = Side(style = 'medium'))
+        ws.cell(row = i, column = 8).border = medium_border_right
         
-        h4.border = Border(top = Side(style = 'medium'), right = Side(style = 'medium'))
-        hm.border = Border(bottom = Side(style = 'medium'), right = Side(style = 'medium'))
+    for i in range(5, max_row,1) :
+        medium_border_left = Border(left = Side(style = 'medium'))
+        ws.cell(row = i, column = 1).border = medium_border_left
         
-        #날짜, 검수평균 ,근무시간 태그 서식
-        for j in range(1, 9, 1):
-            ws.cell(row = 4, column = j).fill = PatternFill(fgColor = "D5D5D5", fill_type = "solid")
-            ws.cell(row = 4, column = j).font = Font(bold = True)
-        
-        line = 5
-        if line_dict_person[n][0] != 0:
-            line = 8+line_dict_person[n][0]+1+6
-            #주차 별 셀 색 채우기
-            for i in range(6, line, 1):
-                for j in range(1, 9 ,1):
-                    ws.cell(row = i, column = j).fill = PatternFill(fgColor = "EDFFE7", fill_type = "solid")
-        if line_dict_person[n][1] != 0:
-            line2 = line + 1
-            line = line2 + 8+line_dict_person[n][1]+1 
-            for i in range(line2, line , 1):
-                for j in range(1, 9 ,1):
-                    ws.cell(row = i, column = j).fill = PatternFill(fgColor = "FFFFCD", fill_type = "solid")
+    for j in range(1, 9, 1) :
+        medium_border_bottom = Border(bottom = Side(style = 'medium'))
+        ws.cell(row = max_row, column = j).border = medium_border_bottom
+    
+    h4 = ws["H4"]
+    hm = ws["H"+str(max_row)]
+    
+    h4.border = Border(top = Side(style = 'medium'), right = Side(style = 'medium'))
+    hm.border = Border(bottom = Side(style = 'medium'), right = Side(style = 'medium'))
+    
+    #날짜, 검수평균 ,근무시간 태그 서식
+    for j in range(1, 9, 1):
+        ws.cell(row = 4, column = j).fill = PatternFill(fgColor = "D5D5D5", fill_type = "solid")
+        ws.cell(row = 4, column = j).font = Font(bold = True)
+    
+    line = 5
+    if line_dict_person[n][0] != 0:
+        line = 8+line_dict_person[n][0]+1+6
+        ws.cell(row = 6, column = 1).value = "1주차"
+        #주차 별 셀 색 채우기
+        for i in range(6, line, 1):
+            for j in range(1, 9 ,1):
+                ws.cell(row = i, column = j).fill = PatternFill(fgColor = "EDFFE7", fill_type = "solid")
+    if line_dict_person[n][1] != 0:
+        line2 = line + 1
+        line = line2 + 8+line_dict_person[n][1]+1 
+        ws.cell(row = line2, column = 1).value = "2주차"
+        for i in range(line2, line , 1):
+            for j in range(1, 9 ,1):
+                ws.cell(row = i, column = j).fill = PatternFill(fgColor = "FFFFCD", fill_type = "solid")
 
-        if line_dict_person[n][2] != 0:        
-            line2 = line + 1
-            line = line2 + 8+line_dict_person[n][2]+1
-            for i in range(line2, line, 1):
-                for j in range(1, 9 ,1):
-                    ws.cell(row = i, column = j).fill = PatternFill(fgColor = "FFEAEA", fill_type = "solid")
-        if line_dict_person[n][3] != 0:        
-            line2 = line + 1
-            line = line2 + 8 + line_dict_person[n][3]+1        
-            for i in range(line2, line, 1):
-                for j in range(1, 9 ,1):
-                    ws.cell(row = i, column = j).fill = PatternFill(fgColor = "F8FFFF", fill_type = "solid")
-        if line_dict_person[n][4] != 0: 
-            line2 = line + 1
-            line = line2 + 8 + line_dict_person[n][4]+1        
-            for i in range(line2, line, 1):
-                for j in range(1, 9 ,1): 
-                    ws.cell(row = i, column = j).fill = PatternFill(fgColor = "D9E5FF", fill_type = "solid")
-                
-        wb.save("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx")
-    print("#######개인별 급여 내역서 생성 완료#######")
+    if line_dict_person[n][2] != 0:        
+        line2 = line + 1
+        line = line2 + 8+line_dict_person[n][2]+1
+        ws.cell(row = line2, column = 1).value = "3주차"
+        for i in range(line2, line, 1):
+            for j in range(1, 9 ,1):
+                ws.cell(row = i, column = j).fill = PatternFill(fgColor = "FFEAEA", fill_type = "solid")
+    if line_dict_person[n][3] != 0:        
+        line2 = line + 1
+        line = line2 + 8 + line_dict_person[n][3]+1    
+        ws.cell(row = line2, column = 1).value = "4주차"
+        for i in range(line2, line, 1):
+            for j in range(1, 9 ,1):
+                ws.cell(row = i, column = j).fill = PatternFill(fgColor = "F8FFFF", fill_type = "solid")
+    if line_dict_person[n][4] != 0: 
+        line2 = line + 1
+        line = line2 + 8 + line_dict_person[n][4]+1        
+        ws.cell(row = line2, column = 1).value = "5주차"
+        for i in range(line2, line, 1):
+            for j in range(1, 9 ,1): 
+                ws.cell(row = i, column = j).fill = PatternFill(fgColor = "D9E5FF", fill_type = "solid")
+            
+    wb.save("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx")
+print("#######개인별 급여 내역서 생성 완료#######")
