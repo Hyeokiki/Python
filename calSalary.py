@@ -54,7 +54,8 @@ if __name__ == "__main__":
         payment = 0
         return payment
 
-    originMonth = int(sys.argv[1]) #두 번째 인자 값에 월을 입력한다.
+    originMonth = int(input("출력할 달을 입력해주세요(ex. 2월이면 2를 입력.) : "))
+    #originMonth = int(sys.argv[1]) #두 번째 인자 값에 월을 입력한ㅊㅊㅊ
     #originMonth = 3
     originName = "2022년 "+ str(originMonth) +"월 출근시간표.xlsx"
 
@@ -332,11 +333,11 @@ if __name__ == "__main__":
                             weekBool1 = True
                         elif (int(sumWorkHour_week)+int(sumOverWorkHour_week)) >= 40 :
                             weekBool2 = True
-                        
+                        '''
                         if not dayCheck_week : 
                             weekBool1 = False
                             weekBool2 = False
-                        
+                        '''
                         #print(person[1])
                         #print(tempList)
                         #print(contract_success_dict[person[1]])
@@ -346,10 +347,11 @@ if __name__ == "__main__":
                             weekBool1 = False
                             weekBool2 = False
                             '''
-                        if check_end(2022,int(WORKDAY[0:2]),int(WORKDAY[3:5]),2022,int(end_dict[n][0:2]),int(end_dict[n][3:5])):
+                        
+                        if check_end(2022,int(WORKDAY[0:2]),int(WORKDAY[3:5])-6,2022,int(end_dict[n][0:2]),int(end_dict[n][3:5])):
                             weekBool1 = False
                             weekBool2 = False
-                            
+                        
                         #사람 타입 별 계산
                         MONTH = int(WORKDAY.split("-")[0])
                         DAY = int(WORKDAY.split("-")[1])
@@ -719,18 +721,21 @@ if __name__ == "__main__":
                     #print("있음")
                     dayCheck_week = False
             '''
+            '''
             if not dayCheck_week : 
                 weekBool1 = False
                 weekBool2 = False
+            '''
             '''
             if not check_contract(contract_success_dict[person[1]]):
                 weekBool1 = False
                 weekBool2 = False
             '''
+            
             if check_end(2022,int(WORKDAY[0:2]),int(WORKDAY[3:5]),2022,int(end_dict[n][0:2]),int(end_dict[n][3:5])):
                 weekBool1 = False
                 weekBool2 = False
-                
+            
             #사람 타입 별 계산
             MONTH = int(WORKDAY.split("-")[0])
             DAY = int(WORKDAY.split("-")[1])
