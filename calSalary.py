@@ -151,6 +151,8 @@ if __name__ == "__main__":
 
     record_dict = {} #이월되는 주휴수당 기록용 dict
 
+    result_dict = {}
+
     tempd = {}
     tempd['Mon'] = 0
     tempd['Tue'] = 1
@@ -992,6 +994,7 @@ if __name__ == "__main__":
         tempList.append("")
         tempList.append("")
         tempList.append("₩" + add_comma(str(int(sumWage))))
+        result_dict[n] = "₩" + add_comma(str(int(sumWage))) #개인 별 최종 세전 금액 저장
         personData.append(tempList)
         
         personData.append([])
@@ -1141,3 +1144,15 @@ for n in tqdm(name) :
             
     wb.save("./"+ str(originMonth) +"월/" + n + "_" + str(originMonth) + "월 급여내역서.xlsx")
 print("#######개인별 급여 내역서 생성 완료#######")
+
+wb = load_workbook("./"+ str(originMonth) +"월 프리랜서 총합(완성본).xlsx")
+ws = wb.active
+
+maxRow = 30
+for rowIndex in tqdm(range(4, maxRow, 1)):
+    targetName = ws.cell(row = rowIndex, column = 3).value
+    if targetName in result_dict:
+        ws.cell(row = rowIndex, column = 4).value = result_dict[targetName]
+wb.save("./"+ str(originMonth) +"월 프리랜서 총합(완성본).xlsx")
+print("#######프리랜서 총합(완성본) 생성 완료#######")
+   
